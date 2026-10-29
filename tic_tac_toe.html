@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tic-Tac-Toe</title>
+<style>
+  :root { color-scheme: light dark; --x: #3b82f6; --o: #e879a9; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px; background: #f3f6fb; color: #182230; }
+  .game { width: min(100%, 420px); padding: 24px; background: white; border-radius: 22px; box-shadow: 0 12px 36px #18223018; text-align: center; }
+  h1 { margin: 0 0 8px; } .subtitle { color: #687386; margin: 0 0 20px; }
+  .scores { display: flex; gap: 10px; margin-bottom: 20px; }
+  .score { flex: 1; padding: 10px; border-radius: 12px; background: #f1f4f9; }
+  .score strong { display: block; font-size: 1.5rem; } .x { color: var(--x); } .o { color: var(--o); }
+  #status { font-weight: 700; min-height: 28px; margin-bottom: 14px; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cell { aspect-ratio: 1; border: 0; border-radius: 14px; background: #eef2f8; font-size: clamp(2.5rem, 12vw, 4rem); font-weight: 800; cursor: pointer; }
+  .cell:disabled { cursor: default; } .cell.x { color: var(--x); } .cell.o { color: var(--o); }
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  button.action { border: 0; border-radius: 12px; padding: 12px 16px; font: inherit; font-weight: 700; cursor: pointer; background: #2563eb; color: white; }
+  button.secondary { background: #e8edf5; color: #182230; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111827; color: #f3f4f6; }
+    .game { background: #1f2937; box-shadow: 0 12px 36px #0004; }
+    .score, .cell, button.secondary { background: #374151; color: #f3f4f6; }
+    .subtitle { color: #c0c8d4; }
+  }
+</style>
+</head>
+<body>
+<main class="game">
+  <h1>⭕ Tic-Tac-Toe ❌</h1>
+  <p class="subtitle">Two players · Take turns placing X and O</p>
+  <section class="scores" aria-label="Scores">
+    <div class="score"><strong class="x" id="xscore">0</strong>X wins</div>
+    <div class="score"><strong class="o" id="oscore">0</strong>O wins</div>
+    <div class="score"><strong id="drawscore">0</strong>Draws</div>
+  </section>
+  <div id="status" role="status" aria-live="polite">Player X's turn</div>
+  <section class="board" aria-label="Tic-Tac-Toe board" id="board"></section>
+  <div class="actions">
+    <button class="action" id="again">Play again</button>
+    <button class="action secondary" id="reset">Reset game and scores</button>
+  </div>
+</main>
+<script>
+(() => {
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const scores = { X: 0, O: 0, draw: 0 };
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  let board, turn, finished;
+  function updateScores() {
+    document.getElementById('xscore').textContent = scores.X;
+    document.getElementById('oscore').textContent = scores.O;
+    document.getElementById('drawscore').textContent = scores.draw;
+  }
+  function render() {
+    boardEl.innerHTML = '';
+    board.forEach((value, i) => {
+      const cell = document.createElement('button');
+      cell.className = 'cell' + (value ? ' ' + value.toLowerCase() : '');
+      cell.textContent = value;
+      cell.setAttribute('aria-label', value ? `Square ${i + 1}: ${value}` : `Square ${i + 1}, empty`);
+      cell.disabled = Boolean(value) || finished;
+      cell.addEventListener('click', () => play(i));
+      boardEl.appendChild(cell);
+    });
+  }
+  function play(i) {
+    if (finished || board[i]) return;
+    board[i] = turn;
+    const won = lines.some(line => line.every(j => board[j] === turn));
+    if (won) {
+      finished = true;
+      statusEl.textContent = `Player ${turn} wins! 🎉`;
+      scores[turn]++;
+    } else if (board.every(Boolean)) {
+      finished = true;
+      statusEl.textContent = "It's a draw! 🤝";
+      scores.draw++;
+    } else {
+      turn = turn === 'X' ? 'O' : 'X';
+      statusEl.textContent = `Player ${turn}'s turn`;
+    }
+    render();
+    updateScores();
+  }
+  function newRound() {
+    board = Array(9).fill('');
+    turn = 'X';
+    finished = false;
+    statusEl.textContent = "Player X's turn";
+    render();
+  }
+  document.getElementById('again').addEventListener('click', newRound);
+  document.getElementById('reset').addEventListener('click', () => {
+    scores.X = scores.O = scores.draw = 0;
+    updateScores();
+    newRound();
+  });
+  newRound();
+})();
+</script>
+</body>
+</html>
